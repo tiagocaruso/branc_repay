@@ -53,14 +53,17 @@ df_call['local_hour'] = df_call['local_time'].apply(lambda x: x.hour)
 df_call['late_call'] = df_call['local_hour'].apply(lambda x: x>21 or x<5)
 df_call['early_call'] = df_call['local_hour'].apply(lambda x: x>=5 and x<9)
 
-# Creating df_call_agg
-f = {'mum_call':np.sum, 'dad_call': np.sum, 'love_call':np.sum,
+## Creating df_call_agg
+f = {'mum_call':np.mean, 'dad_call': np.mean, 'love_call':np.mean ,
      'late_call': np.mean, 'early_call': np.mean,
-     'is_read': np.nanmean,'features_video': np.sum,
-     'country_iso':lambda x:x.value_counts().index[0]}
+     'is_read': np.nanmean,'features_video': np.nanmean,
+     'country_iso':lambda x:x.value_counts().index[0],
+     'datetime':'count'}
 df_call_agg = df_call.groupby('user_id').agg(f).reset_index()
 df_call_agg['is_read'] = df_call_agg['is_read'].fillna(0)
 df_call_agg['features_video'] = df_call_agg['features_video'].fillna(0)
+df_call_agg.columns = ['user_id', 'early_call', 'is_read', 'mum_call', 'late_call',
+                       'features_video','dad_call','country_iso','love_call','n_calls']
 
 ###################################
 #Creating variables from df_contact
@@ -100,11 +103,11 @@ def find_mpesa_balance(x):
 df_log['mpesa_balance'] = df_log['message_body_small'].apply(find_mpesa_balance)
 
 # Creating df_log_agg
-g = {'m_pesa_log':np.sum,'loan_log':np.sum,'bet_log':np.sum,'overdue_log':np.sum,
+g = {'m_pesa_log':np.sum,'loan_log':np.mean,'bet_log':np.mean,'overdue_log':np.mean,
      'sms_type':lambda x:x.value_counts().index[0],
-    'mpesa_balance': np.nanmean}
-
+    'mpesa_balance': np.nanmean, 'message_body_small':'count'}
 df_log_agg = df_log.groupby('user_id').agg(g).reset_index()
+df_log_agg.columns = ['user_id','sms_type','loan_log','overdue_log','mpesa_balance','m_pesa_log','bet_log','n_logs']
 
 #Filling NA with median
 df_log_agg['mpesa_balance'] = df_log_agg['mpesa_balance'].fillna(df_log_agg['mpesa_balance'].median())
@@ -128,10 +131,9 @@ df_dummies = pd.get_dummies(df_full, columns=['country_iso','sms_type'])
 
 # Keeping the relevant columns
 keep_cols = ['disbursement_epoch','early_call','is_read','mum_call','late_call','features_video','dad_call',
-             'love_call','n_devices','times_contacted','n_contacts','overdue_log','bet_log','m_pesa_log',
-             'mpesa_balance','loan_log','repaid','country_iso_KE','country_iso_NA','country_iso_US','sms_type_1.0',
-             'sms_type_2.0']
-
+             'love_call','n_devices','times_contacted','n_contacts','n_logs','n_calls','overdue_log','bet_log',
+             'm_pesa_log','mpesa_balance','loan_log','repaid','country_iso_KE','country_iso_NA','country_iso_US',
+             'sms_type_1.0','sms_type_2.0']
 df_clean = df_dummies[keep_cols]
 
 ###################################
